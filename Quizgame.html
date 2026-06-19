@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Quiz Master Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+:root {
+    --primary: #4f46e5;
+    --primary-dark: #4338ca;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.option-card {
+    transition: var(--transition);
+    cursor: pointer;
+    border: 2px solid #e5e7eb;
+    position: relative;
+    overflow: hidden;
+}
+
+.option-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.option-card:hover::before {
+    left: 100%;
+}
+
+.option-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+    border-color: var(--primary);
+}
+
+.option-card.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    transform: scale(1.02);
+}
+
+.option-card.correct {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)!important;
+    border-color: var(--success)!important;
+    animation: pulse-correct 0.6s ease;
+}
+
+.option-card.incorrect {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)!important;
+    border-color: var(--danger)!important;
+    animation: shake 0.5s ease;
+}
+
+@keyframes pulse-correct {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.progress-bar {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, var(--primary), #7c3aed);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.progress-container {
+    position: relative;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-label {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #4b5563;
+    z-index: 10;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slideIn {
+    animation: slideIn 0.4s ease-out forwards;
+}
+
+.timer-ring {
+    stroke-dasharray: 283;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.difficulty-easy { color: var(--success); }
+.difficulty-medium { color: var(--warning); }
+.difficulty-hard { color: var(--danger); }
+
+.streak-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.btn {
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.leaderboard-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+}
+</style>
+</head>
+<body>
+<div id="game-container" class="w-full max-w-3xl glass p-6 md:p-10">
+
+<div id="start-screen" class="text-center animate-fadeIn">
+    <div class="mb-6">
+        <i class="fas fa-brain text-7xl text-indigo-600 animate-pulse"></i>
+    </div>
+    <h1 class="text-5xl font-extrabold text-gray-800 mb-3">Quiz Master Pro</h1>
+    <p class="text-gray-600 mb-6 text-lg">Test your knowledge with timed questions and streaks!</p>
+
+    <div class="grid grid-cols-2 gap-4 mb-8 max-w-md mx-auto">
+        <select id="category-filter" class="p-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none">
+            <option value="all">All Categories</option>
+            <option value="Geography">Geography</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Technology">Technology</option>
+        </select>
+        <select id="difficulty-filter" class="p-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none">
+            <option value="all">All Levels</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+
+    <button id="start-btn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg">
+        <i class="fas fa-play mr-2"></i>Start Quiz
+    </button>
+
+    <div class="mt-6 text-sm text-gray-500">
+        <i class="fas fa-trophy mr-1"></i>
+        High Score: <span id="high-score-display">0</span>
+    </div>
+</div>
+
+<div id="quiz-screen" class="hidden">
+    <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-3">
+            <span class="category-badge" id="question-category">
+                <i class="fas fa-tag"></i>
+                <span>General</span>
+            </span>
+            <span id="difficulty-label" class="text-sm font-semibold"></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="streak-indicator">
+                <i class="fas fa-fire"></i>
+                <span id="streak-count">0</span>
+            </div>
+            <div class="text-sm font-bold text-gray-700" id="question-counter">1/10</div>
+        </div>
+    </div>
+
+   <!-- Old: h-3 -->
+<div class="flex items-center gap-4 mb-6">
+    <div class="progress-container w-full h-5 rounded-full">
+        <div id="progress-bar" class="progress-bar h-5 rounded-full" style="width: 0%"></div>
+        <span class="progress-label" id="progress-percent">0%</span>
+    </div>
+    <div class="relative w-14 h-14 flex-shrink-0">
+        <svg class="w-full h-full">
+            <circle cx="28" cy="28" r="25" stroke="#e5e7eb" stroke-width="4" fill="none"/>
+            <circle id="timer-ring" class="timer-ring" cx="28" cy="28" r="25" stroke="#4f46e5" stroke-width="4" fill="none"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center font-bold text-indigo-600" id="timer-text">30</div>
+    </div>
+</div>
+
+    <div id="question-container" class="animate-fadeIn">
+        <h2 id="question-text" class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 leading-tight">Loading...</h2>
+        <div id="options-container" class="space-y-3"></div>
+        <div id="input-container" class="hidden">
+            <input type="text" id="blank-input" placeholder="Type your answer..." class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none text-lg transition">
+        </div>
+    </div>
+
+    <div class="mt-8 flex justify-between items-center">
+        <div id="score-preview" class="text-lg font-semibold text-gray-600">
+            Score: <span class="text-indigo-600" id="current-score">0</span>
+        </div>
+        <div class="flex gap-3">
+            <button id="submit-btn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl hidden disabled:opacity-50 disabled:cursor-not-allowed">
+                Submit
+            </button>
+            <button id="next-btn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl hidden">
+                Next <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="result-screen" class="hidden text-center animate-fadeIn">
+    <div class="mb-6">
+        <i id="result-icon" class="fas fa-trophy text-7xl text-yellow-500"></i>
+    </div>
+    <h2 class="text-4xl font-extrabold text-gray-800 mb-2">Quiz Completed!</h2>
+    <div id="score-display" class="text-7xl font-black text-indigo-600 my-6">0%</div>
+    <p id="score-text" class="text-gray-600 text-xl mb-6">You got 0 out of 0 correct.</p>
+
+    <div class="stats-grid mb-8">
+        <div class="bg-indigo-50 p-4 rounded-xl">
+            <div class="text-2xl font-bold text-indigo-600" id="correct-count">0</div>
+            <div class="text-xs text-gray-600 uppercase">Correct</div>
+        </div>
+        <div class="bg-orange-50 p-4 rounded-xl">
+            <div class="text-2xl font-bold text-orange-600" id="best-streak">0</div>
+            <div class="text-xs text-gray-600 uppercase">Best Streak</div>
+        </div>
+        <div class="bg-green-50 p-4 rounded-xl">
+            <div class="text-2xl font-bold text-green-600" id="avg-time">0s</div>
+            <div class="text-xs text-gray-600 uppercase">Avg Time</div>
+        </div>
+    </div>
+
+    <div id="performance-msg" class="mb-8 p-4 bg-indigo-50 rounded-xl text-indigo-800 font-medium"></div>
+
+    <div class="flex gap-4 justify-center">
+        <button id="restart-btn" class="btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full">
+            <i class="fas fa-redo mr-2"></i>Try Again
+        </button>
+        <button id="share-btn" class="btn bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-full">
+            <i class="fas fa-share mr-2"></i>Share
+        </button>
+    </div>
+</div>
+
+</div>
+
+<script>
+const quizData = [
+    { type: 'single', category: 'Geography', difficulty: 'easy', question: 'Which is the largest ocean on Earth?', options: ['Atlantic Ocean', 'Indian Ocean', 'Arctic Ocean', 'Pacific Ocean'], correct: 3, timeLimit: 15 },
+    { type: 'multi', category: 'Science', difficulty: 'medium', question: 'Which of the following are noble gases?', options: ['Helium', 'Oxygen', 'Neon', 'Nitrogen', 'Argon'], correct: [0, 2, 4], timeLimit: 20 },
+    { type: 'blank', category: 'History', difficulty: 'medium', question: 'The Great Wall of China was primarily built to protect against which group?', correct: 'mongols', placeholder: 'Enter group name...', timeLimit: 25 },
+    { type: 'boolean', category: 'Technology', difficulty: 'easy', question: 'Java was originally developed by Microsoft.', options: ['True', 'False'], correct: 1, timeLimit: 10 },
+    { type: 'single', category: 'Astronomy', difficulty: 'easy', question: 'Which planet is known as the Red Planet?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], correct: 1, timeLimit: 15 },
+    { type: 'multi', category: 'Programming', difficulty: 'hard', question: 'Which are JavaScript frameworks/libraries?', options: ['React', 'Laravel', 'Vue', 'Django', 'Angular'], correct: [0, 2, 4], timeLimit: 20 },
+    { type: 'blank', category: 'Biology', difficulty: 'medium', question: 'What is the powerhouse of the cell?', correct: 'mitochondria', placeholder: 'One word...', timeLimit: 20 },
+    { type: 'single', category: 'Geography', difficulty: 'hard', question: 'What is the capital of Kazakhstan?', options: ['Almaty', 'Astana', 'Bishkek', 'Tashkent'], correct: 1, timeLimit: 20 },
+    { type: 'boolean', category: 'Science', difficulty: 'easy', question: 'Water boils at 100°C at sea level.', options: ['True', 'False'], correct: 0, timeLimit: 10 },
+    { type: 'single', category: 'Technology', difficulty: 'medium', question: 'Who founded Tesla?', options: ['Bill Gates', 'Elon Musk', 'Jeff Bezos', 'Mark Zuckerberg'], correct: 1, timeLimit: 15 }
+];
+
+class QuizEngine {
+    constructor() {
+        this.questions = [];
+        this.currentIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.bestStreak = 0;
+        this.selectedOptions = [];
+        this.timer = null;
+        this.timeLeft = 0;
+        this.questionStartTime = 0;
+        this.totalTime = 0;
+        this.highScore = parseInt(localStorage.getItem('quizHighScore') || '0');
+
+        this.elements = {
+            startScreen: document.getElementById('start-screen'),
+            quizScreen: document.getElementById('quiz-screen'),
+            resultScreen: document.getElementById('result-screen'),
+            startBtn: document.getElementById('start-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            submitBtn: document.getElementById('submit-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            shareBtn: document.getElementById('share-btn'),
+            questionText: document.getElementById('question-text'),
+            questionCounter: document.getElementById('question-counter'),
+            questionCategory: document.getElementById('question-category'),
+            difficultyLabel: document.getElementById('difficulty-label'),
+            progressBar: document.getElementById('progress-bar'),
+            optionsContainer: document.getElementById('options-container'),
+            inputContainer: document.getElementById('input-container'),
+            blankInput: document.getElementById('blank-input'),
+            timerText: document.getElementById('timer-text'),
+            timerRing: document.getElementById('timer-ring'),
+            streakCount: document.getElementById('streak-count'),
+            currentScore: document.getElementById('current-score'),
+            highScoreDisplay: document.getElementById('high-score-display'),
+            categoryFilter: document.getElementById('category-filter'),
+            difficultyFilter: document.getElementById('difficulty-filter')
+        };
+
+        this.init();
+    }
+
+    init() {
+        this.elements.startBtn.addEventListener('click', () => this.start());
+        this.elements.restartBtn.addEventListener('click', () => this.start());
+        this.elements.nextBtn.addEventListener('click', () => this.next());
+        this.elements.submitBtn.addEventListener('click', () => this.checkAnswer());
+        this.elements.shareBtn.addEventListener('click', () => this.shareScore());
+        this.elements.highScoreDisplay.textContent = this.highScore;
+
+        this.elements.blankInput.addEventListener('input', () => {
+            this.toggleSubmit(this.elements.blankInput.value.trim().length > 0);
+        });
+    }
+
+    filterQuestions() {
+        const cat = this.elements.categoryFilter.value;
+        const diff = this.elements.difficultyFilter.value;
+
+        this.questions = quizData.filter(q => {
+            const catMatch = cat === 'all' || q.category === cat;
+            const diffMatch = diff === 'all' || q.difficulty === diff;
+            return catMatch && diffMatch;
+        });
+
+        if (this.questions.length === 0) this.questions = [...quizData];
+        this.shuffleArray(this.questions);
+    }
+
+    shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    start() {
+        this.filterQuestions();
+        this.currentIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.bestStreak = 0;
+        this.totalTime = 0;
+
+        this.elements.startScreen.classList.add('hidden');
+        this.elements.resultScreen.classList.add('hidden');
+        this.elements.quizScreen.classList.remove('hidden');
+        this.showQuestion();
+    }
+
+    showQuestion() {
+        const q = this.questions[this.currentIndex];
+        this.selectedOptions = [];
+        this.timeLeft = q.timeLimit || 30;
+        this.questionStartTime = Date.now();
+
+        this.elements.questionCounter.textContent = `Question ${this.currentIndex + 1}/${this.questions.length}`;
+        this.elements.questionCategory.querySelector('span').textContent = q.category;
+        this.elements.difficultyLabel.textContent = q.difficulty.toUpperCase();
+        this.elements.difficultyLabel.className = `text-sm font-semibold difficulty-${q.difficulty}`;
+        this.elements.questionText.textContent = q.question;
+        this.elements.progressBar.style.width = `${(this.currentIndex / this.questions.length) * 100}%`;
+        this.elements.currentScore.textContent = this.score;
+        this.elements.streakCount.textContent = this.streak;
+
+        this.elements.optionsContainer.innerHTML = '';
+        this.elements.inputContainer.classList.add('hidden');
+        this.elements.optionsContainer.classList.remove('hidden');
+        this.elements.nextBtn.classList.add('hidden');
+        this.elements.submitBtn.classList.remove('hidden');
+        this.toggleSubmit(false);
+
+        if (q.type === 'blank') {
+            this.elements.optionsContainer.classList.add('hidden');
+            this.elements.inputContainer.classList.remove('hidden');
+            this.elements.blankInput.value = '';
+            this.elements.blankInput.placeholder = q.placeholder || 'Type here...';
+            this.elements.blankInput.disabled = false;
+            this.elements.blankInput.className = 'w-full p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none text-lg transition';
+        } else {
+            q.options.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'option-card p-4 border-2 rounded-xl flex items-center shadow-sm animate-slideIn';
+                div.style.animationDelay = `${idx * 0.05}s`;
+
+                const icon = q.type === 'multi'? 'fa-square' : 'fa-circle';
+                div.innerHTML = `
+                    <div class="mr-4 text-indigo-400">
+                        <i class="far ${icon} text-xl"></i>
+                    </div>
+                    <span class="text-gray-700 font-medium flex-1">${opt}</span>
+                `;
+                div.addEventListener('click', () => this.selectOption(idx, div, q.type));
+                this.elements.optionsContainer.appendChild(div);
+            });
+        }
+
+        this.startTimer();
+    }
+
+    startTimer() {
+        this.updateTimerDisplay();
+        this.timer = setInterval(() => {
+            this.timeLeft--;
+            this.updateTimerDisplay();
+            if (this.timeLeft <= 0) {
+                this.timeUp();
+            }
+        }, 1000);
+    }
+
+    updateTimerDisplay() {
+        this.elements.timerText.textContent = this.timeLeft;
+        const q = this.questions[this.currentIndex];
+        const maxTime = q.timeLimit || 30;
+        const offset = 283 - (283 * this.timeLeft / maxTime);
+        this.elements.timerRing.style.strokeDashoffset = offset;
+
+        if (this.timeLeft <= 5) {
+            this.elements.timerRing.style.stroke = '#ef4444';
+        } else if (this.timeLeft <= 10) {
+            this.elements.timerRing.style.stroke = '#f59e0b';
+        } else {
+            this.elements.timerRing.style.stroke = '#4f46e5';
+        }
+    }
+
+    timeUp() {
+        clearInterval(this.timer);
+        this.checkAnswer(true);
+    }
+
+    selectOption(idx, el, type) {
+        if (type === 'single' || type === 'boolean') {
+            this.elements.optionsContainer.querySelectorAll('.option-card').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('i').className = 'far fa-circle text-xl text-indigo-400';
+            });
+            this.selectedOptions = [idx];
+            el.classList.add('selected');
+            el.querySelector('i').className = 'fas fa-check-circle text-xl text-indigo-600';
+        } else {
+            if (this.selectedOptions.includes(idx)) {
+                this.selectedOptions = this.selectedOptions.filter(i => i!== idx);
+                el.classList.remove('selected');
+                el.querySelector('i').className = 'far fa-square text-xl text-indigo-400';
+            } else {
+                this.selectedOptions.push(idx);
+                el.classList.add('selected');
+                el.querySelector('i').className = 'fas fa-check-square text-xl text-indigo-600';
+            }
+        }
+        this.toggleSubmit(this.selectedOptions.length > 0);
+    }
+
+    toggleSubmit(enabled) {
+        this.elements.submitBtn.disabled =!enabled;
+        this.elements.submitBtn.classList.toggle('opacity-50',!enabled);
+        this.elements.submitBtn.classList.toggle('cursor-not-allowed',!enabled);
+    }
+
+    checkAnswer(timeOut = false) {
+        clearInterval(this.timer);
+        const q = this.questions[this.currentIndex];
+        const timeSpent = (Date.now() - this.questionStartTime) / 1000;
+        this.totalTime += timeSpent;
+        let isCorrect = false;
+
+        if (timeOut) {
+            this.streak = 0;
+            this.showCorrectAnswer();
+        } else if (q.type === 'blank') {
+            const userAns = this.elements.blankInput.value.trim().toLowerCase();
+            isCorrect = userAns === q.correct.toLowerCase();
+            this.elements.blankInput.disabled = true;
+
+            if (isCorrect) {
+                this.elements.blankInput.classList.add('border-green-500', 'bg-green-50');
+            } else {
+                this.elements.blankInput.classList.add('border-red-500', 'bg-red-50');
+                const hint = document.createElement('p');
+                hint.className = 'text-sm text-green-600 mt-2 font-medium animate-fadeIn';
+                hint.innerHTML = `<i class="fas fa-lightbulb mr-1"></i>Correct: ${q.correct}`;
+                this.elements.inputContainer.appendChild(hint);
+            }
+        } else {
+            const opts = this.elements.optionsContainer.querySelectorAll('.option-card');
+
+            if (q.type === 'multi') {
+                const sortedSel = [...this.selectedOptions].sort();
+                const sortedCor = [...q.correct].sort();
+                isCorrect = JSON.stringify(sortedSel) === JSON.stringify(sortedCor);
+            } else {
+                isCorrect = this.selectedOptions[0] === q.correct;
+            }
+
+            opts.forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
+                const isCorr = q.type === 'multi'? q.correct.includes(idx) : idx === q.correct;
+                const isSel = this.selectedOptions.includes(idx);
+
+                if (isCorr) opt.classList.add('correct');
+                else if (isSel) opt.classList.add('incorrect');
+            });
+        }
+
+        if (isCorrect &&!timeOut) {
+            this.score++;
+            this.streak++;
+            this.bestStreak = Math.max(this.bestStreak, this.streak);
+            this.playSound('correct');
+        } else {
+            this.streak = 0;
+            this.playSound('wrong');
+        }
+
+        this.elements.currentScore.textContent = this.score;
+        this.elements.streakCount.textContent = this.streak;
+        this.elements.submitBtn.classList.add('hidden');
+        this.elements.nextBtn.classList.remove('hidden');
+    }
+
+    showCorrectAnswer() {
+        const q = this.questions[this.currentIndex];
+        if (q.type === 'blank') {
+            this.elements.blankInput.disabled = true;
+            this.elements.blankInput.classList.add('border-red-500', 'bg-red-50');
+            const hint = document.createElement('p');
+            hint.className = 'text-sm text-green-600 mt-2 font-medium';
+            hint.innerHTML = `<i class="fas fa-clock mr-1"></i>Time up! Correct: ${q.correct}`;
+            this.elements.inputContainer.appendChild(hint);
+        } else {
+            this.elements.optionsContainer.querySelectorAll('.option-card').forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
+                const isCorr = q.type === 'multi'? q.correct.includes(idx) : idx === q.correct;
+                if (isCorr) opt.classList.add('correct');
+            });
+        }
+        this.elements.submitBtn.classList.add('hidden');
+        this.elements.nextBtn.classList.remove('hidden');
+    }
+
+    next() {
+        const hint = this.elements.inputContainer.querySelector('p');
+        if (hint) hint.remove();
+        this.currentIndex++;
+
+        if (this.currentIndex < this.questions.length) {
+            this.showQuestion();
+        } else {
+            this.showResults();
+        }
+    }
+
+    showResults() {
+        this.elements.quizScreen.classList.add('hidden');
+        this.elements.resultScreen.classList.remove('hidden');
+
+        const percentage = Math.round((this.score / this.questions.length) * 100);
+        const avgTime = (this.totalTime / this.questions.length).toFixed(1);
+
+        document.getElementById('score-display').textContent = `${percentage}%`;
+        document.getElementById('score-text').textContent = `You got ${this.score} out of ${this.questions.length} correct.`;
+        document.getElementById('correct-count').textContent = this.score;
+        document.getElementById('best-streak').textContent = this.bestStreak;
+        document.getElementById('avg-time').textContent = `${avgTime}s`;
+
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('quizHighScore', this.highScore);
+            document.getElementById('result-icon').className = 'fas fa-crown text-7xl text-yellow-500';
+        }
+
+        const msgEl = document.getElementById('performance-msg');
+        if (percentage === 100) {
+            msgEl.innerHTML = '<i class="fas fa-star mr-2"></i>Perfect! You are a true Quiz Master!';
+            msgEl.className = 'mb-8 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 text-orange-800 rounded-xl font-bold';
+        } else if (percentage >= 80) {
+            msgEl.innerHTML = '<i class="fas fa-thumbs-up mr-2"></i>Excellent work! Almost perfect!';
+            msgEl.className = 'mb-8 p-4 bg-green-50 text-green-800 rounded-xl font-medium';
+        } else if (percentage >= 60) {
+            msgEl.innerHTML = '<i class="fas fa-check mr-2"></i>Good job! Keep practicing to improve.';
+            msgEl.className = 'mb-8 p-4 bg-indigo-50 text-indigo-800 rounded-xl font-medium';
+        } else {
+            msgEl.innerHTML = '<i class="fas fa-book mr-2"></i>Keep learning! Practice makes perfect.';
+            msgEl.className = 'mb-8 p-4 bg-blue-50 text-blue-800 rounded-xl font-medium';
+        }
+    }
+
+    shareScore() {
+        const percentage = Math.round((this.score / this.questions.length) * 100);
+        const text = `I scored ${percentage}% on Quiz Master Pro! 🎯 Streak: ${this.bestStreak}`;
+        if (navigator.share) {
+            navigator.share({ title: 'Quiz Master Pro', text: text });
+        } else {
+            navigator.clipboard.writeText(text);
+            alert('Score copied to clipboard!');
+        }
+    }
+
+    playSound(type) {
+        // Placeholder for sound effects
+        // Can integrate Web Audio API here
+    }
+}
+
+new QuizEngine();
+</script>
+</body>
+</html>
